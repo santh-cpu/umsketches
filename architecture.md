@@ -12,12 +12,12 @@ unifiedMemoryValidator/
 │   ├── core/                # LAYER 2: The Engine (Pure C++17/20)
 │   │   ├── validator.cpp    # Main orchestration singleton
 │   │   ├── validator.hpp
-│   │   ├── shadow_table.cpp # Memory tracker (maps void* to Lock State)
-│   │   └── shadow_table.hpp 
+│   │   ├── shadowtable.cpp # Memory tracker (maps void* to Lock State)
+│   │   └── shadowtable.hpp 
 │   │
 │   └── utils/               # LAYER 3: Tooling
 │       └── logger.hpp       # ANSI-colored terminal output for Neovim/CLI
 │
 └── tests/                   # LAYER 4: The Proof (Python/MLX)
-    ├── test_race.py         # Intentionally triggers UMA data corruption
-    └── test_baseline.py     # Clean MLX execution for control data
+    ├── testrace.py         # Intentionally triggers UMA data corruption
+    └── testbaseline.py     # Clean MLX execution for control data
