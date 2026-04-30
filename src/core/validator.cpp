@@ -1,18 +1,42 @@
 #include "validator.hpp"
+#include <iostream>
+#include <mutex>
 
 Validator &Validator::get_instance() {
   static Validator instance;
   return instance;
 }
 
-void Validator::lock_buffer(void *ptr) {
-  std::cout << "[UMV Core] gpu locked memory address" << ptr << std::endl;
+void Validator::lockbuffer(void *ptr) {
+  std::lock_guard guard(tablemutex);
+  activelocks.insert(ptr);
+  std::cout << "[UMS Lock Table] added    " << ptr << std::endl;
 }
 
-void Validator::unlock_buffer(void *ptr) {
-  std::cout << "[UMV Core] gpu released memory address" << ptr << std::endl;
+void Validator::unlockbuffer(void *ptr) {
+  std::lock_guard guard(tablemutex);
+  activelocks.erase(ptr);
+  std::cout << "[UMS Lock Table] released " << ptr << std::endl;
 }
 
-void Validator::check_access(void *ptr) {
-  std::cout << "[UMV Core] gpu checking access to: " << ptr << std::endl;
+void Validator::checkaccess(void *ptr, const char *context) {
+  if (islocked(ptr)) {
+    std::cout << "[UMA Race Detected]" << std::endl;
+    std::cout << "context: " << context << std::endl;
+    std::cout << "cpu attempted to access " << ptr << " while locked by gpu"
+              << std::endl;
+    // TODO:abort
+    __builtin_trap();
+    // todone
+  }
+}
+
+bool Validator::islocked(void *ptr) {
+  std::lock_guard guard(tablemutex);
+  return activelocks.find(ptr) != activelocks.end();
+}
+
+bool Validator::gpubusy() {
+  std::lock_guard guard(tablemutex);
+  return !activelocks.empty();
 }

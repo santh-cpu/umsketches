@@ -1,6 +1,6 @@
 unifiedMemoryValidator/
 ├── Makefile                 # Core build script (clang++ flags, dynamic linking)
-├── run_umv.sh               # Execution wrapper (injects DYLD_INSERT_LIBRARIES)
+├── run_ums.sh               # Execution wrapper (injects DYLD_INSERT_LIBRARIES)
 ├── README.md                # The "Pitch" (Methodology, graphs, instructions)
 ├── architecture.md
 │
