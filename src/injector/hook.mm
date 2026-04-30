@@ -63,9 +63,11 @@ __attribute__((constructor)) static void initums() {
 
   std::cout << "gateway armed" << std::endl;
 
-  std::cout << "[Test] spawning cpu zombie" << std::endl;
-  id<MTLCommandBuffer> testcmd = [queue commandBuffer];
-  [testcmd commit];
-  std::cout << "[Test] cpu asking for ram contents" << std::endl;
-  [databuffer contents];
+  /*
+    std::cout << "[Test] spawning cpu zombie" << std::endl;
+    id<MTLCommandBuffer> testcmd = [queue commandBuffer];
+    [testcmd commit];
+    std::cout << "[Test] cpu asking for ram contents" << std::endl;
+    [databuffer contents];
+  */
 }

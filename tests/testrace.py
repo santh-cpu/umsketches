@@ -1,6 +1,7 @@
 import mlx.core as mx
 import time
 import threading
+import numpy
 
 
 def testgpuactivity():
@@ -18,6 +19,7 @@ def testgpuactivity():
     # By converting to numpy immediately without a synchronization barrier,
     # we force the CPU to call `contents` on the underlying Metal buffer
     # while the GPU is still processing the matmul.
+    data = numpy.array(c)
     print(f"computation complete. resultant array:{c}")
 
 
