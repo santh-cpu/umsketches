@@ -15,10 +15,8 @@ def testgpuactivity():
     # dispatch to gpu
     mx.eval(c)
 
-    # INTENTIONAL RACE CONDITION
-    # By converting to numpy immediately without a synchronization barrier,
-    # we force the CPU to call `contents` on the underlying Metal buffer
-    # while the GPU is still processing the matmul.
+    # race attempt
+    # data tryna process while c is called in print
     data = numpy.array(c)
     print(f"computation complete. resultant array:{c}")
 
