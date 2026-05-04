@@ -1,7 +1,6 @@
 import mlx.core as mx
 import time
 import threading
-import numpy
 
 
 def testgpuactivity():
@@ -17,7 +16,7 @@ def testgpuactivity():
 
     # race attempt
     # data tryna process while c is called in print
-    data = numpy.array(c)
+    data = mx.array(c)
     print(f"computation complete. resultant array:{c}")
 
 
