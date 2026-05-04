@@ -1,5 +1,5 @@
 #include "validator.hpp"
-#include <iostream>
+#include "../utils/logger.hpp"
 #include <mutex>
 
 Validator &Validator::get_instance() {
@@ -10,24 +10,18 @@ Validator &Validator::get_instance() {
 void Validator::lockbuffer(void *ptr) {
   std::lock_guard guard(tablemutex);
   activelocks.insert(ptr);
-  std::cout << "[UMS Lock Table] added    " << ptr << std::endl;
+  UMSINFO("locked buffer   %p", ptr);
 }
 
 void Validator::unlockbuffer(void *ptr) {
   std::lock_guard guard(tablemutex);
   activelocks.erase(ptr);
-  std::cout << "[UMS Lock Table] released " << ptr << std::endl;
+  UMSINFO("released buffer %p", ptr);
 }
 
 void Validator::checkaccess(void *ptr, const char *context) {
-  if (islocked(ptr)) {
-    std::cout << "[UMA Race Detected]" << std::endl;
-    std::cout << "context: " << context << std::endl;
-    std::cout << "cpu attempted to access " << ptr << " while locked by gpu"
-              << std::endl;
-    // TODO:abort
-    __builtin_trap();
-    // todone
+  if (gpubusy()) {
+    UMSFATAL(context, ptr);
   }
 }
 

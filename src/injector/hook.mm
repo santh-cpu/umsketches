@@ -1,9 +1,10 @@
-#import "../core/validator.hpp"
-#import <Foundation/Foundation.h>
-#import <Metal/Metal.h>
-#import <iostream>
-#import <objc/message.h>
-#import <objc/runtime.h>
+#include "../core/validator.hpp"
+#include "../utils/logger.hpp"
+#include <Foundation/Foundation.h>
+#include <Metal/Metal.h>
+#include <iostream>
+#include <objc/message.h>
+#include <objc/runtime.h>
 
 void swizzlecommit(id<MTLCommandBuffer> self, SEL _cmd) {
   Validator::get_instance().lockbuffer((__bridge void *)self);
@@ -36,7 +37,7 @@ void *swizzlecontent(id<MTLBuffer> self, SEL _cmd) {
 }
 
 __attribute__((constructor)) static void initums() {
-  std::cout << "strap on ums" << std::endl;
+  UMSSWIZ("strap on ums");
   id<MTLDevice> device = MTLCreateSystemDefaultDevice();
   id<MTLCommandQueue> queue = [device newCommandQueue];
 
@@ -61,7 +62,7 @@ __attribute__((constructor)) static void initums() {
                   method_getTypeEncoding(mContent));
   method_setImplementation(mContent, (IMP)swizzlecontent);
 
-  std::cout << "gateway armed" << std::endl;
+  UMSSWIZ("gateway armed");
 
   /*
     std::cout << "[Test] spawning cpu zombie" << std::endl;
