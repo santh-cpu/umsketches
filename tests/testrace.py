@@ -11,12 +11,8 @@ def testgpuactivity():
 
     c = mx.matmul(a, b)
 
-    # dispatch to gpu
-    mx.eval(c)
-
     # race attempt
-    # data tryna process while c is called in print
-    data = mx.array(c)
+    # no mx.eval
     print(f"computation complete. resultant array:{c}")
 
 
