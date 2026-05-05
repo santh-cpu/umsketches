@@ -1,10 +1,10 @@
-#include "../core/validator.hpp"
-#include "../utils/logger.hpp"
-#include <Foundation/Foundation.h>
-#include <Metal/Metal.h>
-#include <iostream>
-#include <objc/message.h>
-#include <objc/runtime.h>
+#import "../core/validator.hpp"
+#import "../utils/logger.hpp"
+#import <Foundation/Foundation.h>
+#import <Metal/Metal.h>
+#import <iostream>
+#import <objc/message.h>
+#import <objc/runtime.h>
 
 void swizzlecommit(id<MTLCommandBuffer> self, SEL _cmd) {
   Validator::get_instance().lockbuffer((__bridge void *)self);
