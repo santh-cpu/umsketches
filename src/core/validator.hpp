@@ -7,8 +7,8 @@ public:
   Validator(const Validator &) = delete;
   void operator=(const Validator &) = delete;
 
-  void lockbuffer(void *ptr);
-  void unlockbuffer(void *ptr);
+  void lockbuffer(std::vector<void *> &buffer);
+  void unlockbuffer(std::vector<void *> &buffer);
   void checkaccess(void *ptr, const char *context);
   bool islocked(void *ptr);
   bool gpubusy();

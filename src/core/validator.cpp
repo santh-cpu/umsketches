@@ -1,36 +1,29 @@
 #include "validator.hpp"
 #include "../utils/logger.hpp"
-#include <mutex>
+#include "shadowtable.hpp"
+#include <stddef.h>
 
 Validator &Validator::get_instance() {
   static Validator instance;
   return instance;
 }
 
-void Validator::lockbuffer(void *ptr) {
-  std::lock_guard guard(tablemutex);
-  activelocks.insert(ptr);
-  UMSINFO("locked buffer   %p", ptr);
-}
-
-void Validator::unlockbuffer(void *ptr) {
-  std::lock_guard guard(tablemutex);
-  activelocks.erase(ptr);
-  UMSINFO("released buffer %p", ptr);
-}
-
-void Validator::checkaccess(void *ptr, const char *context) {
-  if (gpubusy()) {
-    UMSFATAL(context, ptr);
+void Validator::lockbuffer(std::vector<void *> &buffer) {
+  Shadowtable::get().lockbuffer(buffer);
+  if (!buffer.empty()) {
+    UMSINFO("added    %zu data buffers", buffer.size());
   }
 }
 
-bool Validator::islocked(void *ptr) {
-  std::lock_guard guard(tablemutex);
-  return activelocks.find(ptr) != activelocks.end();
+void Validator::unlockbuffer(std::vector<void *> &buffer) {
+  Shadowtable::get().unlockbuffer(buffer);
+  if (!buffer.empty()) {
+    UMSINFO("released %zu data buffers", buffer.size());
+  }
 }
 
-bool Validator::gpubusy() {
-  std::lock_guard guard(tablemutex);
-  return !activelocks.empty();
+void Validator::checkaccess(void *ptr, const char *context) {
+  if (Shadowtable::get().islocked(ptr)) {
+    UMSFATAL(context, ptr);
+  }
 }
