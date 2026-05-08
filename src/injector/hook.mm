@@ -7,6 +7,14 @@
 #import <objc/runtime.h>
 #include <vector>
 
+void swiznewbuflen(id<MTLCommandBuffer> self, SEL _cmd, NSUInteger length,
+                   MTLResourceOptions options) {
+  SEL org = NSSelectorFromString(@"ums_original_newBufferWithLenghth:options");
+  id<MTLBuffer> buf = ((
+      id<MTLBuffer> (*)(id, SEL, NSUInteger, MTLResourceOptions))objc_msgSend)(
+      self, org, length, options);
+}
+
 void swizzlecommit(id<MTLCommandBuffer> self, SEL _cmd) {
   void *raw = ((__bridge void *)self);
   std::vector<void *> buffer = {raw};
