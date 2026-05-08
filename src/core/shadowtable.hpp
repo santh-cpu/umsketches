@@ -9,7 +9,7 @@ enum class memState { cpuowned, gpulocked };
 
 struct memDesc {
   size_t size;
-  memState state;
+  int lockcOunt;
 };
 
 class Shadowtable {

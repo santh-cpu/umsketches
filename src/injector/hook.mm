@@ -5,12 +5,17 @@
 #import <iostream>
 #import <objc/message.h>
 #import <objc/runtime.h>
+#include <vector>
 
 void swizzlecommit(id<MTLCommandBuffer> self, SEL _cmd) {
-  Validator::get_instance().lockbuffer((__bridge void *)self);
+  void *raw = ((__bridge void *)self);
+  std::vector<void *> buffer = {raw};
+  Validator::get().lockbuffer(buffer);
 
   [self addCompletedHandler:^(id<MTLCommandBuffer> buffer) {
-    Validator::get_instance().unlockbuffer((__bridge void *)buffer);
+    void *rawb = ((__bridge void *)buffer);
+    std::vector<void *> completedbuffer = {rawb};
+    Validator::get().unlockbuffer(completedbuffer);
   }];
 
   SEL ogSelector = NSSelectorFromString(@"ums_original_commit");
@@ -21,7 +26,8 @@ void *swizzlecontent(id<MTLBuffer> self, SEL _cmd) {
   SEL ogSelector = NSSelectorFromString(@"ums_original_content");
   void *raw = ((void *(*)(id, SEL))objc_msgSend)(self, ogSelector);
 
-  if (Validator::get_instance().gpubusy()) {
+  void *raws = (__bridge void *)self;
+  if (Validator::get().islocked(raws)) {
     NSArray *stacktrace = [NSThread callStackSymbols];
     NSLog(@"[UMS fatality] cpu accessed [MLTBuffer contents] during active gpu"
           @" dispatch");
@@ -29,7 +35,7 @@ void *swizzlecontent(id<MTLBuffer> self, SEL _cmd) {
     for (NSString *e in stacktrace) {
       NSLog(@"%@", e);
     }
-    Validator::get_instance().checkaccess(
+    Validator::get().checkaccess(
         raw,
         "[UMS fatality] cpu accessed [MLTBuffer contents] during active gpu");
   }

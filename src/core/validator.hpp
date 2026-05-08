@@ -1,9 +1,9 @@
 #pragma once
+#include <vector>
 
-#include <unordered_set>
 class Validator {
 public:
-  static Validator &get_instance();
+  static Validator &get();
   Validator(const Validator &) = delete;
   void operator=(const Validator &) = delete;
 
@@ -11,11 +11,7 @@ public:
   void unlockbuffer(std::vector<void *> &buffer);
   void checkaccess(void *ptr, const char *context);
   bool islocked(void *ptr);
-  bool gpubusy();
 
 private:
   Validator() = default;
-
-  std::unordered_set<void *> activelocks;
-  std::mutex tablemutex;
 };

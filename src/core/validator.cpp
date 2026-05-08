@@ -3,7 +3,7 @@
 #include "shadowtable.hpp"
 #include <stddef.h>
 
-Validator &Validator::get_instance() {
+Validator &Validator::get() {
   static Validator instance;
   return instance;
 }
@@ -27,3 +27,5 @@ void Validator::checkaccess(void *ptr, const char *context) {
     UMSFATAL(context, ptr);
   }
 }
+
+bool Validator::islocked(void *ptr) { return Shadowtable::get().islocked(ptr); }

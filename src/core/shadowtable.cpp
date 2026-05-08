@@ -1,9 +1,15 @@
 #include "shadowtable.hpp"
 #include "../utils/logger.hpp"
+#include <mutex>
+
+Shadowtable &Shadowtable::get() {
+  static Shadowtable instance;
+  return instance;
+}
 
 void Shadowtable::regAlloc(void *ptr, size_t size) {
   std::lock_guard guard(tablemutex);
-  memMap[ptr] = {size, memState::cpuowned};
+  memMap[ptr] = {size, 0};
 }
 
 void Shadowtable::freeAlloc(void *ptr) {
@@ -15,7 +21,7 @@ void Shadowtable::lockbuffer(std::vector<void *> &buffer) {
   std::lock_guard guard(tablemutex);
   for (void *ptr : buffer) {
     if (memMap.find(ptr) != memMap.end()) {
-      memMap[ptr].state = memState::gpulocked;
+      ++(memMap.find(ptr)->second.lockcOunt);
     }
   }
 }
@@ -23,8 +29,9 @@ void Shadowtable::lockbuffer(std::vector<void *> &buffer) {
 void Shadowtable::unlockbuffer(std::vector<void *> &buffer) {
   std::lock_guard guard(tablemutex);
   for (void *ptr : buffer) {
-    if (memMap.find(ptr) != memMap.end()) {
-      memMap[ptr].state = memState::cpuowned;
+    if (memMap.find(ptr) != memMap.end() ||
+        memMap.find(ptr)->second.lockcOunt > 0) {
+      --(memMap.find(ptr)->second.lockcOunt);
     }
   }
 }
@@ -33,7 +40,12 @@ bool Shadowtable::islocked(void *ptr) {
   std::lock_guard guard(tablemutex);
   auto it = memMap.find(ptr);
   if (it != memMap.end()) {
-    return it->second.state == memState::gpulocked;
+    return it->second.lockcOunt > 0;
   }
   return false;
+}
+
+bool Shadowtable::istracked(void *ptr) {
+  std::lock_guard guard(tablemutex);
+  return memMap.find(ptr) != memMap.end();
 }
