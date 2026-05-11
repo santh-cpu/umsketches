@@ -45,33 +45,6 @@ id<MTLCommandBuffer> swizcmdbuf(id<MTLCommandQueue> self, SEL _cmd) {
   return cb;
 }
 
-void swizzleUseResource(id<MTLComputeCommandEncoder> self, SEL _cmd,
-                        id<MTLResource> resource, MTLResourceUsage usage) {
-  SEL og = NSSelectorFromString(@"ums_original_useResource:usage:");
-  ((void (*)(id, SEL, id<MTLResource>, MTLResourceUsage))objc_msgSend)(
-      self, og, resource, usage);
-  if ([resource conformsToProtocol:@protocol(MTLBuffer)]) {
-    id<MTLCommandBuffer> cb = [((id)self) commandBuffer];
-    NSMutableSet *used = objc_getAssociatedObject(cb, &keyUsedResources);
-    [used addObject:[NSValue valueWithPointer:(__bridge void *)resource]];
-  }
-}
-
-void swizzleUseResources(id<MTLComputeCommandEncoder> self, SEL _cmd,
-                         const id<MTLResource> *resources, NSUInteger count,
-                         MTLResourceUsage usage) {
-  SEL og = NSSelectorFromString(@"ums_original_useResources:count:usage:");
-  ((void (*)(id, SEL, const id<MTLResource> *, NSUInteger,
-             MTLResourceUsage))objc_msgSend)(self, og, resources, count, usage);
-  id<MTLCommandBuffer> cb = [((id)self) commandBuffer];
-  NSMutableSet *used = objc_getAssociatedObject(cb, &keyUsedResources);
-  for (NSUInteger i = 0; i < count; i++) {
-    if ([resources[i] conformsToProtocol:@protocol(MTLBuffer)]) {
-      [used addObject:[NSValue valueWithPointer:(__bridge void *)resources[i]]];
-    }
-  }
-}
-
 void swizzleFillBuffer(id<MTLBlitCommandEncoder> self, SEL _cmd,
                        id<MTLBuffer> buffer, NSRange range, uint8_t value) {
   SEL og = NSSelectorFromString(@"ums_original_fillBuffer:range:value:");
@@ -124,34 +97,6 @@ void *swizzlecontent(id<MTLBuffer> self, SEL _cmd) {
   return raw;
 }
 
-void swizzleSetBufferOffsetAtIndex(id<MTLComputeCommandEncoder> self, SEL _cmd,
-                                   id<MTLBuffer> buffer, NSUInteger offset,
-                                   NSUInteger index) {
-  SEL og = NSSelectorFromString(@"ums_original_setBuffer:offset:atIndex:");
-  ((void (*)(id, SEL, id<MTLBuffer>, NSUInteger, NSUInteger))objc_msgSend)(
-      self, og, buffer, offset, index);
-  if (buffer) {
-    id<MTLCommandBuffer> cb = [((id)self) commandBuffer];
-    NSMutableSet *used = objc_getAssociatedObject(cb, &keyUsedResources);
-    [used addObject:[NSValue valueWithPointer:(__bridge void *)buffer]];
-  }
-}
-
-void swizzleSetBuffersOffsetsWithRange(id<MTLComputeCommandEncoder> self,
-                                       SEL _cmd, const id<MTLBuffer> *buffers,
-                                       const NSUInteger *offsets,
-                                       NSRange range) {
-  SEL og = NSSelectorFromString(@"ums_original_setBuffers:offsets:withRange:");
-  ((void (*)(id, SEL, const id<MTLBuffer> *, const NSUInteger *,
-             NSRange))objc_msgSend)(self, og, buffers, offsets, range);
-  id<MTLCommandBuffer> cb = [((id)self) commandBuffer];
-  NSMutableSet *used = objc_getAssociatedObject(cb, &keyUsedResources);
-  for (NSUInteger i = range.location;
-       i < range.location + range.length && buffers[i] != nil; i++) {
-    [used addObject:[NSValue valueWithPointer:(__bridge void *)buffers[i]]];
-  }
-}
-
 __attribute__((constructor)) static void initums() {
   UMSSWIZ("strap on ums");
   id<MTLDevice> device = MTLCreateSystemDefaultDevice();
@@ -166,54 +111,6 @@ __attribute__((constructor)) static void initums() {
                     method_getTypeEncoding(mCmdBuf));
     method_setImplementation(mCmdBuf, (IMP)swizcmdbuf);
   }
-
-  id<MTLCommandBuffer> tempCmd = [queue commandBuffer];
-  id<MTLComputeCommandEncoder> compEnc = [tempCmd computeCommandEncoder];
-  Class compEncClass = [compEnc class];
-
-  SEL ogSetBuf = @selector(setBuffer:offset:atIndex:);
-  SEL swizSetBuf =
-      NSSelectorFromString(@"ums_original_setBuffer:offset:atIndex:");
-  Method mSetBuf = class_getInstanceMethod(compEncClass, ogSetBuf);
-  if (mSetBuf) {
-    class_addMethod(compEncClass, swizSetBuf, method_getImplementation(mSetBuf),
-                    method_getTypeEncoding(mSetBuf));
-    method_setImplementation(mSetBuf, (IMP)swizzleSetBufferOffsetAtIndex);
-  }
-
-  SEL ogSetBufs = @selector(setBuffers:offsets:withRange:);
-  SEL swizSetBufs =
-      NSSelectorFromString(@"ums_original_setBuffers:offsets:withRange:");
-  Method mSetBufs = class_getInstanceMethod(compEncClass, ogSetBufs);
-  if (mSetBufs) {
-    class_addMethod(compEncClass, swizSetBufs,
-                    method_getImplementation(mSetBufs),
-                    method_getTypeEncoding(mSetBufs));
-    method_setImplementation(mSetBufs, (IMP)swizzleSetBuffersOffsetsWithRange);
-  }
-
-  SEL ogUseRes = @selector(useResource:usage:);
-  SEL swizUseRes = NSSelectorFromString(@"ums_original_useResource:usage:");
-  Method mUseRes = class_getInstanceMethod(compEncClass, ogUseRes);
-  if (mUseRes) {
-    class_addMethod(compEncClass, swizUseRes, method_getImplementation(mUseRes),
-                    method_getTypeEncoding(mUseRes));
-    method_setImplementation(mUseRes, (IMP)swizzleUseResource);
-  }
-
-  SEL ogUseRess = @selector(useResources:count:usage:);
-  SEL swizUseRess =
-      NSSelectorFromString(@"ums_original_useResources:count:usage:");
-  Method mUseRess = class_getInstanceMethod(compEncClass, ogUseRess);
-  if (mUseRess) {
-    class_addMethod(compEncClass, swizUseRess,
-                    method_getImplementation(mUseRess),
-                    method_getTypeEncoding(mUseRess));
-    method_setImplementation(mUseRess, (IMP)swizzleUseResources);
-  }
-
-  [compEnc endEncoding];
-  [tempCmd commit];
 
   id<MTLCommandBuffer> tempBlit = [queue commandBuffer];
   id<MTLBlitCommandEncoder> blitEnc = [tempBlit blitCommandEncoder];
