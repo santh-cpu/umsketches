@@ -1,6 +1,46 @@
 # Unified Memory Validator
 
 output:
+from testrace.m:
+(race successfully detected)
+````
+testrace: replacing existing signature
+2026-05-11 16:05:59.590 testrace[71748:12203651] [testrace] buf class: AGXG16GFamilyBuffer
+2026-05-11 16:05:59.591 testrace[71748:12203651] [testrace] contents IMP: 0x100611adc
+2026-05-11 16:05:59.592 testrace[71748:12203651] [testrace] calling contents immediately after commit...
+2026-05-11 16:05:59.592 testrace[71748:12203651] [UMS fatality] cpu accessed [MLTBuffer contents] during active gpu dispatch
+2026-05-11 16:05:59.592 testrace[71748:12203651] stack trace:
+2026-05-11 16:05:59.592 testrace[71748:12203651] 0   libums.dylib                        0x0000000100611b50 _Z14swizzlecontentPU19objcproto9MTLBuffer11objc_objectP13objc_selector + 116
+2026-05-11 16:05:59.592 testrace[71748:12203651] 1   testrace                            0x00000001005d4914 main + 452
+2026-05-11 16:05:59.592 testrace[71748:12203651] 2   dyld                                0x0000000199d2ab98 start + 6076
+./runumc.sh: line 9: 71748 Abort trap: 6           DYLD_INSERT_LIBRARIES=./libums.dylib ./testrace
+
+````
+
+from py scripts:
+(newer script - no race detected)
+````
+---proper py script with mx.evall()---
+start gpu operation..
+computation complete. resultant array:array([[-54.7143, -26.1499, 53.471, ..., 21.666, 6.81271, 120.652],
+       [-58.631, 4.40588, 24.1577, ..., -7.15809, 71.2136, -112.784],
+       [-56.7201, -124.481, -156.274, ..., -22.2116, -31.5946, 150.303],
+       ...,
+       [93.7647, -17.8024, 15.948, ..., -128.688, -17.4615, -35.0316],
+       [-55.025, 0.906375, 93.78, ..., -174.415, 61.4542, -44.6405],
+       [29.0302, -90.6748, -102.484, ..., 32.0464, -179.402, -85.615]], dtype=float32)
+---induced race---
+start gpu operation..
+computation complete. resultant array:array([[79.6953, 2.33769, -98.2214, ..., 51.2322, -112.37, 85.7234],
+       [200.587, -188.82, -40.0613, ..., -50.795, 230.418, -16.4893],
+       [-18.4494, -147.718, -182.5, ..., -144.944, -144.564, -6.46491],
+       ...,
+       [-119.765, -194.182, 35.8522, ..., -90.6924, -130.678, 98.4849],
+       [-70.3611, 9.92761, 83.427, ..., -82.7318, 134.201, 41.0984],
+       [89.6521, 31.6552, -155.718, ..., -75.974, 36.2008, 46.3831]], dtype=float32)
+````
+
+(older script - race detected)
 ````
 strap on ums
 gateway armed
