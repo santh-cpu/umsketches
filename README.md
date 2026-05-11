@@ -19,6 +19,7 @@ testrace: replacing existing signature
 
 from py scripts:
 (newer script - no race detected)
+TODO: mlx support through lower level metal interception
 ````
 ---proper py script with mx.evall()---
 start gpu operation..
