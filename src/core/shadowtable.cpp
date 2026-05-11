@@ -20,8 +20,9 @@ void Shadowtable::freeAlloc(void *ptr) {
 void Shadowtable::lockbuffer(std::vector<void *> &buffer) {
   std::lock_guard guard(tablemutex);
   for (void *ptr : buffer) {
-    if (memMap.find(ptr) != memMap.end()) {
-      ++(memMap.find(ptr)->second.lockcOunt);
+    auto it = memMap.find(ptr);
+    if (it != memMap.end()) {
+      ++(it->second.lockcOunt);
     }
   }
 }
@@ -29,9 +30,9 @@ void Shadowtable::lockbuffer(std::vector<void *> &buffer) {
 void Shadowtable::unlockbuffer(std::vector<void *> &buffer) {
   std::lock_guard guard(tablemutex);
   for (void *ptr : buffer) {
-    if (memMap.find(ptr) != memMap.end() ||
-        memMap.find(ptr)->second.lockcOunt > 0) {
-      --(memMap.find(ptr)->second.lockcOunt);
+    auto it = memMap.find(ptr);
+    if (it != memMap.end() && it->second.lockcOunt > 0) {
+      --(it->second.lockcOunt);
     }
   }
 }
